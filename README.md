@@ -2,6 +2,8 @@
 
 Customer-support chat widget for [WhatsPortal](https://www.whatsportal.io).
 
+Live: <https://whatsportal-support.vercel.app>
+
 **Phase 1 — UI only.** No backend, API, socket, database, auth, or chatbot.
 Nothing is faked either: there are no canned replies and no mock data.
 
