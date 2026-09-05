@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { isValidPhone, phoneDigits } from "@/lib/widget-theme";
@@ -22,10 +22,10 @@ export function PhoneNumberField({
 }) {
   // The stored value is trimmed, so the draft has to own the box while it has
   // focus — otherwise the space after "+91" disappears as it is typed.
-  const isFocused = useRef(false);
+  const [isFocused, setIsFocused] = useState(false);
   const [draft, setDraft] = useState(value);
   const [lastValue, setLastValue] = useState(value);
-  if (!isFocused.current && value !== lastValue) {
+  if (!isFocused && value !== lastValue) {
     setLastValue(value);
     setDraft(value);
   }
@@ -48,16 +48,14 @@ export function PhoneNumberField({
         placeholder="+91 98765 43210"
         aria-describedby="wp-phone-hint"
         aria-invalid={isIncomplete}
-        onFocus={() => {
-          isFocused.current = true;
-        }}
+        onFocus={() => setIsFocused(true)}
         onChange={(event) => {
           setDraft(event.target.value);
           setLastValue(event.target.value);
           onChange(event.target.value);
         }}
         onBlur={() => {
-          isFocused.current = false;
+          setIsFocused(false);
           setDraft(value);
           setLastValue(value);
         }}

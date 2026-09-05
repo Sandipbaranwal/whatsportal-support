@@ -5,9 +5,9 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { usePrefersDark } from "@/lib/use-prefers-dark";
 import {
   DEFAULT_THEME,
+  isValidPhone,
   normalizeTheme,
   themeToCssVars,
-  whatsappHref,
 } from "@/lib/widget-theme";
 import { ChatButton } from "./chat-button";
 import { ChatPopup } from "./chat-popup";
@@ -43,6 +43,9 @@ export function SupportChatWidget({ theme = DEFAULT_THEME, open, onOpenChange })
 
   const launcherRef = useRef(null);
   const inputRef = useRef(null);
+  const sendFormRef = useRef(null);
+  const sendPhoneRef = useRef(null);
+  const sendMessageRef = useRef(null);
   // Guards the focus effect so page load never steals focus to the launcher.
   const hasOpenedRef = useRef(false);
 
@@ -62,15 +65,24 @@ export function SupportChatWidget({ theme = DEFAULT_THEME, open, onOpenChange })
   const close = useCallback(() => setOpen(false), [setOpen]);
   const toggle = useCallback(() => setOpen(!isOpen), [setOpen, isOpen]);
 
-  // WhatsApp is the transport: the message is handed over as prefilled text on
-  // a `wa.me` link. With no number configured there is nowhere to hand it to,
-  // so sending stays the no-op it has always been rather than opening a tab
-  // onto a broken link.
+  // WhatsApp is the transport, and `/api/send` builds the link: the message is
+  // posted there and the route redirects this tab onto `wa.me` with the text
+  // already typed.
+  //
+  // A real form submission rather than fetch-then-window.open. Awaiting a
+  // response first would end the user gesture, and the popup blocker would eat
+  // the tab; submitting in the same tick as the click does not have that
+  // problem, and keeps the message out of any URL of ours.
   const phone = t.phone;
   const sendMessage = useCallback(
     (text) => {
-      const href = whatsappHref({ phone }, text);
-      if (href) window.open(href, "_blank", "noopener,noreferrer");
+      // Nothing configured to send to — stay the no-op rather than opening a
+      // tab onto a dead end.
+      if (!isValidPhone(phone)) return;
+
+      sendPhoneRef.current.value = phone;
+      sendMessageRef.current.value = text;
+      sendFormRef.current.submit();
     },
     [phone],
   );
@@ -110,8 +122,8 @@ export function SupportChatWidget({ theme = DEFAULT_THEME, open, onOpenChange })
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [isOpen, close]);
 
-  // Both children are fixed-positioned, so this wrapper carries the theme
-  // without taking part in layout.
+  // The panel and launcher are fixed-positioned and the form is hidden, so
+  // this wrapper carries the theme without taking part in layout.
   return (
     <div style={themeToCssVars(theme, { dark: isDark })}>
       {isMounted && (
@@ -135,6 +147,12 @@ export function SupportChatWidget({ theme = DEFAULT_THEME, open, onOpenChange })
         controls={panelId}
         logo={t.logo}
       />
+
+      {/* Submitted from `sendMessage`; never shown, never focusable. */}
+      <form ref={sendFormRef} action="/api/send" method="POST" target="_blank" hidden>
+        <input type="hidden" name="phone" ref={sendPhoneRef} />
+        <input type="hidden" name="message" ref={sendMessageRef} />
+      </form>
     </div>
   );
 }

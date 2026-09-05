@@ -178,10 +178,10 @@ function NumberField({ label, value, min = 0, max = MAX_OFFSET, onChange }) {
   // rendered from that normalised copy — so syncing the draft from the prop on
   // every keystroke rewrote the digits under the caret. Typing "165" became
   // "160" on the third key. Now the prop only wins when the field is idle.
-  const isFocused = useRef(false);
+  const [isFocused, setIsFocused] = useState(false);
   const [draft, setDraft] = useState(String(value));
   const [lastValue, setLastValue] = useState(value);
-  if (!isFocused.current && value !== lastValue) {
+  if (!isFocused && value !== lastValue) {
     setLastValue(value);
     setDraft(String(value));
   }
@@ -213,9 +213,7 @@ function NumberField({ label, value, min = 0, max = MAX_OFFSET, onChange }) {
           min={min}
           max={max}
           value={draft}
-          onFocus={() => {
-            isFocused.current = true;
-          }}
+          onFocus={() => setIsFocused(true)}
           onChange={(event) => {
             const next = event.target.value;
             setDraft(next);
@@ -226,7 +224,7 @@ function NumberField({ label, value, min = 0, max = MAX_OFFSET, onChange }) {
             if (/^\d+$/.test(next) && n >= min && n <= max) push(n);
           }}
           onBlur={(event) => {
-            isFocused.current = false;
+            setIsFocused(false);
             setDraft(String(commit(event.target.value)));
           }}
           className={cn(
