@@ -4,8 +4,10 @@ Customer-support chat widget for [WhatsPortal](https://www.whatsportal.io).
 
 Live: <https://whatsportal-support.vercel.app>
 
-**Phase 1 — UI only.** No backend, API, socket, database, auth, or chatbot.
-Nothing is faked either: there are no canned replies and no mock data.
+**No backend, API, socket, database, auth, or chatbot.** Nothing is faked
+either: there are no canned replies and no mock data. A sent message leaves the
+page as a prefilled `wa.me` link to the number set in the customizer, so the
+conversation continues in WhatsApp itself.
 
 ## Stack
 
@@ -28,7 +30,7 @@ components/support-widget/
   chat-popup.jsx                  panel shell + transcript region
   chat-header.jsx                 brand bar + close button
   welcome-message.jsx             the static greeting
-  message-input.jsx               composer (send is a deliberate no-op)
+  message-input.jsx               composer
   widget-footer.jsx               "Powered by WhatsPortal"
   whatsportal-mark.jsx            inline logo, tintable
   icons.jsx                       stroke icon set
@@ -47,6 +49,7 @@ Then open http://localhost:3000 and use the launcher in the bottom-right.
 
 ## Extending
 
-`SupportChatWidget` is the single stateful component — later phases hook in
-there. `MessageInput` already accepts an `onSend` callback that Phase 2 can
-point at a local conversation store; today nothing is passed to it.
+`SupportChatWidget` owns open/close state and builds the `wa.me` link;
+`ChatPanel` owns the visitor's number and decides whether a message can go.
+A later phase that wants a real transcript replaces `ChatPanel`'s `send` —
+`MessageInput` and `SuggestedReplies` both already submit to it.

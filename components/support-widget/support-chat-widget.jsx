@@ -3,7 +3,12 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { usePrefersDark } from "@/lib/use-prefers-dark";
-import { DEFAULT_THEME, normalizeTheme, themeToCssVars } from "@/lib/widget-theme";
+import {
+  DEFAULT_THEME,
+  normalizeTheme,
+  themeToCssVars,
+  whatsappHref,
+} from "@/lib/widget-theme";
 import { ChatButton } from "./chat-button";
 import { ChatPopup } from "./chat-popup";
 
@@ -57,6 +62,19 @@ export function SupportChatWidget({ theme = DEFAULT_THEME, open, onOpenChange })
   const close = useCallback(() => setOpen(false), [setOpen]);
   const toggle = useCallback(() => setOpen(!isOpen), [setOpen, isOpen]);
 
+  // WhatsApp is the transport: the message is handed over as prefilled text on
+  // a `wa.me` link. With no number configured there is nowhere to hand it to,
+  // so sending stays the no-op it has always been rather than opening a tab
+  // onto a broken link.
+  const phone = t.phone;
+  const sendMessage = useCallback(
+    (text) => {
+      const href = whatsappHref({ phone }, text);
+      if (href) window.open(href, "_blank", "noopener,noreferrer");
+    },
+    [phone],
+  );
+
   // Mount before the enter animation runs. A render-phase adjustment rather
   // than an effect, so the panel is never painted one frame late.
   if (isOpen !== lastOpen) {
@@ -106,6 +124,7 @@ export function SupportChatWidget({ theme = DEFAULT_THEME, open, onOpenChange })
           isOpen={isOpen}
           onClose={close}
           inputRef={inputRef}
+          onSendMessage={sendMessage}
         />
       )}
 

@@ -3,8 +3,7 @@
 import { useState } from "react";
 
 import { cn } from "@/lib/utils";
-
-const MAX_MESSAGES = 6;
+import { MAX_MESSAGES, MAX_SUGGESTION_LENGTH } from "@/lib/widget-theme";
 
 function newId() {
   return globalThis.crypto?.randomUUID?.() ?? `msg-${Date.now()}-${Math.random()}`;
@@ -56,8 +55,9 @@ export function SuggestedMessagesField({ messages, onChange }) {
         </span>
       </div>
       <p className="mt-1 text-xs text-muted-foreground">
-        Shown as tappable chips under the greeting. Drag the handle, or focus it
-        and use the arrow keys, to reorder.
+        Shown as tappable chips under the greeting, up to{" "}
+        {MAX_SUGGESTION_LENGTH} characters each. Drag the handle, or focus it and
+        use the arrow keys, to reorder.
       </p>
 
       <ul className="mt-3 space-y-2">
@@ -104,6 +104,7 @@ export function SuggestedMessagesField({ messages, onChange }) {
             <input
               type="text"
               value={message.text}
+              maxLength={MAX_SUGGESTION_LENGTH}
               placeholder="Message text"
               aria-label={`Suggested message ${index + 1}`}
               onChange={(event) => update(index, event.target.value)}

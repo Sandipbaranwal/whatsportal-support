@@ -23,6 +23,7 @@ import { AdvancedPanel } from "./advanced-panel";
 import { BrandColorField } from "./brand-color-field";
 import { CustomizeRail } from "./customize-rail";
 import { ImageField } from "./image-field";
+import { PhoneNumberField } from "./phone-number-field";
 import { SegmentedField } from "./segmented-field";
 import { SuggestedMessagesField } from "./suggested-messages-field";
 import { ThemeTransfer } from "./theme-transfer";
@@ -84,6 +85,13 @@ export function CustomizeScreen() {
               hint="Shown in the header, on the launcher, and beside the greeting. Up to 200 KB."
               value={t.logo}
               onChange={(value) => setThemeValue("logo", value)}
+            />
+
+            <PhoneNumberField
+              value={t.phone}
+              askVisitorPhone={t.askVisitorPhone}
+              onChange={(value) => setThemeValue("phone", value)}
+              onAskChange={(value) => setThemeValue("askVisitorPhone", value)}
             />
 
             <div>

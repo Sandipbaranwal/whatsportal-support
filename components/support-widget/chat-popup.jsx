@@ -22,6 +22,7 @@ export function ChatPopup({
   isOpen,
   onClose,
   inputRef,
+  onSendMessage,
 }) {
   const panelRef = useRef(null);
   useFocusTrap(panelRef, isOpen);
@@ -53,6 +54,7 @@ export function ChatPopup({
         inputId={inputId}
         onClose={onClose}
         inputRef={inputRef}
+        onSendMessage={onSendMessage}
         className="h-full rounded-2xl"
       />
     </div>

@@ -12,10 +12,10 @@ const MAX_INPUT_HEIGHT = 120;
 /**
  * WhatsApp-style composer.
  *
- * Phase 1 is UI only: the field is a real controlled input and the send button
- * reflects whether there is something to send, but submitting deliberately
- * does nothing. `onSend` is the seam Phase 2 will hook a local conversation
- * store into — see the no-op default.
+ * `onSend` takes the trimmed message and returns false when it could not take
+ * it — the visitor still owes us their number, say. The draft survives that,
+ * so a refused send never costs someone what they typed. With no handler at
+ * all (the docked preview) the field simply clears.
  */
 export function MessageInput({ inputId, onSend, ref }) {
   const [value, setValue] = useState("");
@@ -29,8 +29,7 @@ export function MessageInput({ inputId, onSend, ref }) {
     (event) => {
       event.preventDefault();
       if (!canSend) return;
-      // Phase 1: no message processing, no transport, no fabricated reply.
-      onSend?.(value.trim());
+      if (onSend?.(value.trim()) === false) return;
       setValue("");
     },
     [canSend, onSend, value],

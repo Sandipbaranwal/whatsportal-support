@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   failingContrast,
+  MAX_OFFSET,
   THEME_FIELDS,
   THEME_GROUPS,
 } from "@/lib/widget-theme";
@@ -168,17 +169,36 @@ function ContrastReport({ theme }) {
   );
 }
 
-function NumberField({ label, value, onChange }) {
+function NumberField({ label, value, min = 0, max = MAX_OFFSET, onChange }) {
   const inputId = `wp-advanced-${label.replace(/\s+/g, "-").toLowerCase()}`;
 
-  // Hold a draft so clearing the box to retype doesn't snap back to the
-  // default. Only parseable values reach the theme; blur restores the rest.
+  // The draft owns the box while it has focus.
+  //
+  // The theme rounds and clamps whatever it is handed, and this panel is
+  // rendered from that normalised copy — so syncing the draft from the prop on
+  // every keystroke rewrote the digits under the caret. Typing "165" became
+  // "160" on the third key. Now the prop only wins when the field is idle.
+  const isFocused = useRef(false);
   const [draft, setDraft] = useState(String(value));
   const [lastValue, setLastValue] = useState(value);
-  if (value !== lastValue) {
+  if (!isFocused.current && value !== lastValue) {
     setLastValue(value);
     setDraft(String(value));
   }
+
+  // Numbers, never strings: `--wp-panel-offset-y` adds 72 to this value.
+  const push = (n) => {
+    setLastValue(n);
+    if (n !== value) onChange(n);
+  };
+
+  const commit = (raw) => {
+    const n = Number(raw);
+    if (raw.trim() === "" || !Number.isFinite(n)) return value;
+    const clamped = Math.min(max, Math.max(min, Math.round(n)));
+    push(clamped);
+    return clamped;
+  };
 
   return (
     <div className="flex items-center gap-2.5">
@@ -189,16 +209,34 @@ function NumberField({ label, value, onChange }) {
         <input
           id={inputId}
           type="number"
-          min={0}
-          max={160}
+          inputMode="numeric"
+          min={min}
+          max={max}
           value={draft}
+          onFocus={() => {
+            isFocused.current = true;
+          }}
           onChange={(event) => {
             const next = event.target.value;
             setDraft(next);
-            if (next !== "" && Number.isFinite(Number(next))) onChange(next);
+            // Preview whole numbers that are already in range. Everything else
+            // — blanks, a lone "-", a value on its way past the cap — waits for
+            // blur rather than snapping the launcher around mid-word.
+            const n = Number(next);
+            if (/^\d+$/.test(next) && n >= min && n <= max) push(n);
           }}
-          onBlur={() => setDraft(String(value))}
-          className="w-12 bg-transparent text-right text-xs tabular-nums focus:outline-none"
+          onBlur={(event) => {
+            isFocused.current = false;
+            setDraft(String(commit(event.target.value)));
+          }}
+          className={cn(
+            "w-16 bg-transparent text-right text-xs tabular-nums focus:outline-none",
+            // The native spinner covers half of a box this size; arrow keys
+            // still step the value without it.
+            "[appearance:textfield]",
+            "[&::-webkit-inner-spin-button]:appearance-none",
+            "[&::-webkit-outer-spin-button]:appearance-none",
+          )}
         />
         <span className="text-[10px] text-muted-foreground">px</span>
       </div>

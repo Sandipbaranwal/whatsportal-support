@@ -3,8 +3,8 @@
 /**
  * Quick-reply chips under the greeting.
  *
- * Phase 1 is UI only, so these are real buttons with nothing behind them —
- * the same seam as the composer's no-op send.
+ * Picking one sends it as though it had been typed, so `onSelect` is the same
+ * handler the composer submits to.
  */
 export function SuggestedReplies({ messages, onSelect }) {
   if (!messages?.length) return null;
