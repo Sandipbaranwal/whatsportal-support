@@ -22,7 +22,10 @@ export function WidgetPreview({ theme }) {
         theme={theme}
         titleId="wp-preview-title"
         inputId="wp-preview-input"
-        className="h-[520px] w-full max-w-[380px] rounded-2xl border border-[var(--wp-border)] bg-[var(--wp-panel-bg)] shadow-2xl shadow-black/20 ring-1 ring-black/5"
+        // Height tracks the viewport rather than sitting at a flat 520px, which
+        // overflowed a short screen and, once the preview became sticky at
+        // `lg`, could stand taller than the space it was sticking within.
+        className="h-[clamp(24rem,60dvh,32.5rem)] w-full max-w-[380px] rounded-2xl border border-[var(--wp-border)] bg-[var(--wp-panel-bg)] shadow-2xl shadow-black/20 ring-1 ring-black/5"
       />
     </div>
   );

@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
+import { useMediaQuery } from "@/lib/use-media-query";
 import { usePrefersDark } from "@/lib/use-prefers-dark";
+import { useScrollLock } from "@/lib/use-scroll-lock";
 import {
   DEFAULT_THEME,
   isValidPhone,
@@ -13,6 +15,14 @@ import { ChatButton } from "./chat-button";
 import { ChatPopup } from "./chat-popup";
 
 const EXIT_ANIMATION_MS = 150;
+
+/**
+ * Mirrors the `wp-docked` variant in `globals.css` — the conditions under which
+ * the panel is a card rather than the whole viewport. Kept in step by hand: a
+ * scroll lock is a side effect CSS cannot express, and it must agree with the
+ * layout it is compensating for.
+ */
+const DOCKED_QUERY = "(min-width: 40rem) and (min-height: 34rem)";
 
 /**
  * Entry point for the WhatsPortal Support widget.
@@ -32,6 +42,7 @@ export function SupportChatWidget({ theme = DEFAULT_THEME, open, onOpenChange })
   const t = normalizeTheme(theme);
   const prefersDark = usePrefersDark();
   const isDark = t.scheme === "dark" || (t.scheme === "auto" && prefersDark);
+  const isDocked = useMediaQuery(DOCKED_QUERY);
 
   const isControlled = open !== undefined;
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
@@ -111,6 +122,12 @@ export function SupportChatWidget({ theme = DEFAULT_THEME, open, onOpenChange })
       launcherRef.current?.focus({ preventScroll: true });
     }
   }, [isOpen]);
+
+
+  // Hold the page still behind the panel, but only where the panel is
+  // full-bleed and the page is merely showing through. Docked, the page beside
+  // it is still the user's to scroll. Re-evaluates on rotate.
+  useScrollLock(isOpen && !isDocked);
 
   // Escape closes the panel from anywhere on the page.
   useEffect(() => {

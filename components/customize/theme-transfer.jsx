@@ -6,7 +6,7 @@ import { importTheme } from "@/lib/theme-store";
 import { cn } from "@/lib/utils";
 
 const buttonClass = cn(
-  "rounded-lg border border-border px-3.5 py-2 text-xs font-medium",
+  "rounded-lg border border-border px-3.5 py-2 text-xs font-medium wp-touch:py-2.5",
   "transition-colors hover:bg-muted",
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
 );

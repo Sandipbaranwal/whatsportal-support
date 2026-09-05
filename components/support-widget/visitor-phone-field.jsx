@@ -77,7 +77,7 @@ export function VisitorPhoneField({ value, onChange, inputRef }) {
           type="submit"
           disabled={!canSave}
           className={cn(
-            "shrink-0 rounded-xl px-3.5 py-2 text-sm font-medium",
+            "shrink-0 rounded-xl px-3.5 py-2 text-sm font-medium wp-touch:py-2.5",
             "bg-[var(--wp-launcher-bg)] text-[var(--wp-launcher-icon)]",
             "transition-[background-color,opacity] hover:bg-[var(--wp-launcher-bg-hover)]",
             "disabled:pointer-events-none disabled:opacity-40",

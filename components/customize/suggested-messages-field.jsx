@@ -56,8 +56,9 @@ export function SuggestedMessagesField({ messages, onChange }) {
       </div>
       <p className="mt-1 text-xs text-muted-foreground">
         Shown as tappable chips under the greeting, up to{" "}
-        {MAX_SUGGESTION_LENGTH} characters each. Drag the handle, or focus it and
-        use the arrow keys, to reorder.
+        {MAX_SUGGESTION_LENGTH} characters each. Drag the handle — or focus it
+        and use the arrow keys — to reorder; on a touchscreen, use the arrows
+        beside each row.
       </p>
 
       <ul className="mt-3 space-y-2">
@@ -96,10 +97,40 @@ export function SuggestedMessagesField({ messages, onChange }) {
                 }
               }}
               aria-label={`Reorder "${message.text || "empty message"}"`}
-              className="shrink-0 cursor-grab rounded-md px-1 py-2 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
+              className="shrink-0 cursor-grab rounded-md px-1 py-2 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing wp-touch:hidden"
             >
               <GripIcon />
             </button>
+
+            {/*
+             * The same reorder, for pointers that cannot drag.
+             *
+             * HTML5 drag-and-drop does not fire for touch, so on a coarse
+             * pointer the grip is not a smaller control — it is no control at
+             * all, and it stands down for this pair. They call the same
+             * `reorder`, and being real buttons they answer the keyboard too,
+             * so nothing is lost in the swap.
+             */}
+            <div className="hidden shrink-0 flex-col wp-touch:flex">
+              <button
+                type="button"
+                onClick={() => reorder(index, index - 1)}
+                disabled={index === 0}
+                aria-label={`Move "${message.text || "empty message"}" up`}
+                className="rounded-t-md px-2 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-30"
+              >
+                <ChevronIcon />
+              </button>
+              <button
+                type="button"
+                onClick={() => reorder(index, index + 1)}
+                disabled={index === messages.length - 1}
+                aria-label={`Move "${message.text || "empty message"}" down`}
+                className="rounded-b-md px-2 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-30"
+              >
+                <ChevronIcon className="rotate-180" />
+              </button>
+            </div>
 
             <input
               type="text"
@@ -118,7 +149,7 @@ export function SuggestedMessagesField({ messages, onChange }) {
               type="button"
               onClick={() => remove(index)}
               aria-label={`Delete "${message.text || "empty message"}"`}
-              className="shrink-0 rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="shrink-0 rounded-md p-2 wp-touch:p-3 text-muted-foreground transition-colors hover:bg-muted hover:text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <TrashIcon />
             </button>
@@ -146,6 +177,25 @@ export function SuggestedMessagesField({ messages, onChange }) {
         Add message
       </button>
     </div>
+  );
+}
+
+function ChevronIcon({ className }) {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className}
+    >
+      <path d="m6 15 6-6 6 6" />
+    </svg>
   );
 }
 

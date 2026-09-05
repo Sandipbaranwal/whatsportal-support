@@ -23,7 +23,9 @@ export function SegmentedField({
         {label}
       </p>
 
-      <div className="mt-2 inline-flex rounded-lg border border-border p-0.5">
+      {/* `flex-wrap` is insurance: the group is `inline-flex` and would rather
+          push past a 320px screen than fold. */}
+      <div className="mt-2 inline-flex flex-wrap rounded-lg border border-border p-0.5">
         {options.map((option) => (
           <button
             key={option.value}
@@ -31,7 +33,7 @@ export function SegmentedField({
             aria-pressed={value === option.value}
             onClick={() => onChange(option.value)}
             className={cn(
-              "rounded-md px-3.5 py-1.5 text-xs font-medium transition-colors",
+              "rounded-md px-3.5 py-1.5 text-xs font-medium transition-colors wp-touch:py-2.5",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               value === option.value
                 ? "bg-primary text-primary-foreground"

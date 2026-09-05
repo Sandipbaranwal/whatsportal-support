@@ -12,6 +12,10 @@ const geistMono = Geist_Mono({
 });
 
 export const viewport = {
+  // Lets the page paint under the notch and the home indicator, which is also
+  // the only way `env(safe-area-inset-*)` reports anything but 0 — the widget's
+  // fixed launcher and panel budget for those insets in `globals.css`.
+  viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#2cbb67" },
     { media: "(prefers-color-scheme: dark)", color: "#1a1a1a" },
@@ -31,7 +35,9 @@ export default function RootLayout({ children }) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      {/* `overflow-x-clip` is a backstop, not the fix: fixed-position furniture
+          is inset from the safe areas at source so nothing overflows here. */}
+      <body className="flex min-h-full flex-col overflow-x-clip">{children}</body>
     </html>
   );
 }

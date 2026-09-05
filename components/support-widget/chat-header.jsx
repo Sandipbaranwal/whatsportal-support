@@ -33,7 +33,7 @@ export function ChatHeader({ titleId, title, subtitle, logo, onClose }) {
           type="button"
           onClick={onClose}
           aria-label="Close chat"
-          className="grid size-9 shrink-0 place-items-center rounded-xl text-[var(--wp-header-muted)] transition-colors hover:bg-white/15 hover:text-[var(--wp-header-fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--wp-header-fg)]"
+          className="grid size-9 shrink-0 place-items-center rounded-xl wp-touch:size-11 text-[var(--wp-header-muted)] transition-colors hover:bg-white/15 hover:text-[var(--wp-header-fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--wp-header-fg)]"
         >
           <CloseIcon />
         </button>
