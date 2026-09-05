@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { cn } from "@/lib/utils";
 import { WidgetPlayground } from "@/components/widget-playground";
 import { WhatsPortalMark } from "@/components/support-widget/whatsportal-mark";
 
@@ -9,7 +10,16 @@ import { WhatsPortalMark } from "@/components/support-widget/whatsportal-mark";
  */
 export default function Home() {
   return (
-    <main className="flex flex-1 flex-col items-center justify-center px-6 py-20">
+    <main
+      className={cn(
+        "flex flex-1 flex-col items-center justify-center",
+        "pl-[calc(1.5rem+var(--wp-safe-l))] pr-[calc(1.5rem+var(--wp-safe-r))]",
+        // 80px top and bottom is most of a small phone's screen. The heavier
+        // bottom padding keeps the fine print out from under the launcher,
+        // which is fixed and knows nothing about this page's content.
+        "py-12 pb-28 sm:px-6 sm:py-20 sm:pb-24",
+      )}
+    >
       <div className="w-full max-w-md text-center">
         <span className="mx-auto grid size-14 place-items-center rounded-2xl border border-border bg-card text-foreground shadow-sm shadow-black/5">
           <WhatsPortalMark className="w-8" />

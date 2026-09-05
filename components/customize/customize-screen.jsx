@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useSyncExternalStore } from "react";
+import { useCallback, useState, useSyncExternalStore } from "react";
 
 import { SupportChatWidget } from "@/components/support-widget";
 import { cn } from "@/lib/utils";
@@ -51,16 +51,31 @@ export function CustomizeScreen() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
+  // Stable identity: the drawer keys an effect off this, and every edit made
+  // inside it re-renders this screen. A fresh closure each time would rebind
+  // that effect on every keystroke.
+  const closeAdvanced = useCallback(() => setIsAdvancedOpen(false), []);
+
   const t = normalizeTheme(theme);
   const contrastIssues = failingContrast(t).length;
 
   return (
-    <div className="flex min-h-full flex-col lg:flex-row">
+    <div className="flex min-h-full flex-col xl:flex-row">
       <CustomizeRail onStartChat={() => setIsChatOpen(true)} />
 
-      <div className="min-w-0 flex-1 px-6 py-10 lg:px-12 lg:py-14">
+      <div
+        className={cn(
+          "min-w-0 flex-1 py-8",
+          // The safe-area terms are 0 except on a notched phone in landscape.
+          "pl-[calc(1.5rem+var(--wp-safe-l))] pr-[calc(1.5rem+var(--wp-safe-r))]",
+          "sm:py-10 lg:px-10 xl:px-12 xl:py-14",
+          // Text run across the full width of a 2560px display is text nobody
+          // reads, so the column stops growing and centres instead.
+          "2xl:mx-auto 2xl:max-w-[1400px]",
+        )}
+      >
         <header>
-          <h1 className="text-[1.75rem] font-semibold tracking-tight">
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-[1.75rem]">
             Customize the widget to suit your brand
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -77,12 +92,22 @@ export function CustomizeScreen() {
           </p>
         ) : null}
 
-        <div className="mt-9 flex flex-col gap-12 xl:flex-row xl:gap-16">
+        {/*
+         * Controls beside the preview from `lg` rather than `xl`.
+         *
+         * With the rail lying down as a banner below `xl`, the full width is
+         * free here: 448 of controls + 32 of gap + 340 of preview + 80 of
+         * padding is 900, inside 1024. It used to wait until 1280 and then not
+         * fit — 1388 of content into 1280, with the preview marked `shrink-0`
+         * so the controls absorbed all of it and came out narrower than they
+         * had been one pixel earlier.
+         */}
+        <div className="mt-8 flex flex-col gap-10 lg:flex-row lg:gap-8 xl:gap-10 2xl:gap-16">
           {/* Controls */}
-          <div className="w-full max-w-md space-y-8">
+          <div className="w-full min-w-0 max-w-md space-y-8">
             <ImageField
               label="Logo"
-              hint="Shown in the header, on the launcher, and beside the greeting. Up to 200 KB."
+              hint="Shown in the header, on the launcher, and beside the greeting. Up to 500 KB."
               value={t.logo}
               onChange={(value) => setThemeValue("logo", value)}
             />
@@ -178,8 +203,8 @@ export function CustomizeScreen() {
           </div>
 
           {/* Preview */}
-          <div className="xl:w-[380px] xl:shrink-0">
-            <div className="xl:sticky xl:top-14">
+          <div className="lg:w-[340px] lg:shrink-0 xl:w-[380px]">
+            <div className="lg:sticky lg:top-8 xl:top-14">
               <WidgetPreview theme={t} />
             </div>
           </div>
@@ -190,7 +215,7 @@ export function CustomizeScreen() {
         <AdvancedPanel
           theme={t}
           onChange={setThemeValue}
-          onClose={() => setIsAdvancedOpen(false)}
+          onClose={closeAdvanced}
         />
       ) : null}
 

@@ -16,7 +16,7 @@ export function SuggestedReplies({ messages, onSelect }) {
           key={message.id}
           type="button"
           onClick={() => onSelect?.(message.text)}
-          className="max-w-[85%] rounded-xl border border-[var(--wp-launcher-bg)] bg-[var(--wp-bubble-bg)] px-3.5 py-2 text-sm font-medium text-[var(--wp-launcher-bg)] transition-colors hover:bg-[var(--wp-body-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--wp-launcher-bg)]"
+          className="max-w-[85%] rounded-xl border border-[var(--wp-launcher-bg)] bg-[var(--wp-bubble-bg)] px-3.5 py-2 wp-touch:py-2.5 text-sm font-medium text-[var(--wp-launcher-bg)] transition-colors hover:bg-[var(--wp-body-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--wp-launcher-bg)]"
         >
           {message.text}
         </button>

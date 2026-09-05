@@ -44,7 +44,7 @@ export function BrandColorField({ value, onChange }) {
             onClick={() => onChange(preset.value)}
             style={{ backgroundColor: preset.value }}
             className={cn(
-              "size-9 rounded-lg ring-offset-2 ring-offset-background transition-transform",
+              "size-9 rounded-lg ring-offset-2 ring-offset-background transition-transform wp-touch:size-11",
               "hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               value.toLowerCase() === preset.value && "ring-2 ring-foreground",
             )}
@@ -58,7 +58,7 @@ export function BrandColorField({ value, onChange }) {
             aria-label="Pick brand colour"
             onChange={(event) => onChange(event.target.value)}
             className={cn(
-              "size-7 shrink-0 cursor-pointer rounded-md border-none bg-transparent p-0",
+              "size-7 shrink-0 cursor-pointer rounded-md border-none bg-transparent p-0 wp-touch:size-9",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               "[&::-webkit-color-swatch]:rounded [&::-webkit-color-swatch]:border-none",
               "[&::-webkit-color-swatch-wrapper]:p-0",

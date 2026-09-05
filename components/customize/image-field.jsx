@@ -6,10 +6,14 @@ import { cn } from "@/lib/utils";
 
 /**
  * Uploads are inlined as data URLs and kept in `localStorage`, which caps out
- * around 5 MB for the whole origin. 200 KB leaves room for everything else and
- * is generous for a logo.
+ * around 5 MB for the whole origin.
+ *
+ * Base64 costs about a third on top, so 500 KB of image is roughly 670 KB
+ * stored — comfortably inside the budget with the rest of the theme alongside
+ * it. Past that, `commit` in the theme store catches the quota error and says
+ * the theme won't be remembered.
  */
-const MAX_BYTES = 200 * 1024;
+const MAX_BYTES = 500 * 1024;
 
 function formatKb(bytes) {
   return `${Math.round(bytes / 1024)} KB`;

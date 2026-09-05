@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { useScrollLock } from "@/lib/use-scroll-lock";
 import { cn } from "@/lib/utils";
 import {
   failingContrast,
@@ -22,10 +23,26 @@ import { SegmentedField } from "./segmented-field";
 export function AdvancedPanel({ theme, onChange, onClose }) {
   const panelRef = useRef(null);
 
-  // Escape closes, and focus moves in so the drawer is usable from the keyboard.
+  // The page behind is held still for as long as this is open: it is modal in
+  // both layouts, and as a sheet a stray scroll would drag the very preview it
+  // is being tuned against out from under it.
+  useScrollLock(true);
+
+  /*
+   * Focus moves in once, when the panel opens — and only then.
+   *
+   * This used to share an effect with the Escape listener below, which depends
+   * on `onClose`. Every edit in here re-renders the screen above, which handed
+   * down a fresh `onClose`, which re-ran the effect — and stole focus back to
+   * the panel on every keystroke. Typing a two-digit distance meant clicking
+   * into the field again for the second digit.
+   */
   useEffect(() => {
     panelRef.current?.focus();
+  }, []);
 
+  // Escape closes from anywhere in the drawer.
+  useEffect(() => {
     const onKeyDown = (event) => {
       if (event.key === "Escape") onClose();
     };
@@ -39,7 +56,7 @@ export function AdvancedPanel({ theme, onChange, onClose }) {
         type="button"
         aria-label="Close advanced settings"
         onClick={onClose}
-        className="fixed inset-0 z-40 animate-fade-in bg-black/40 focus-visible:outline-none"
+        className="fixed inset-0 z-[60] animate-fade-in bg-black/40 focus-visible:outline-none"
       />
 
       <aside
@@ -49,8 +66,26 @@ export function AdvancedPanel({ theme, onChange, onClose }) {
         aria-modal="true"
         aria-labelledby="wp-advanced-title"
         className={cn(
-          "fixed inset-y-0 right-0 z-50 flex w-full max-w-sm animate-drawer-in flex-col",
-          "border-l border-border bg-card shadow-2xl shadow-black/30",
+          /*
+           * Above the launcher, not level with it. Both are fixed, and at a
+           * shared z-50 the launcher floated over this panel's bottom-right
+           * controls — the corner where the colour swatches live.
+           */
+          "fixed z-[70] flex flex-col bg-card shadow-2xl shadow-black/30",
+          /*
+           * A sheet until the page is genuinely two columns, then a drawer.
+           *
+           * The switch is `lg` — the same breakpoint at which the preview moves
+           * beside the controls — and not `sm`. A 384px drawer over a 667px
+           * window is 57% of the screen: it buried the form it was editing and
+           * left a cramped strip beside it. Below `lg` the layout is one column
+           * and there is nothing to sit beside, so the sheet is the honest
+           * shape.
+           */
+          "inset-x-0 bottom-0 max-h-[85dvh] animate-drawer-up rounded-t-2xl border-t border-border",
+          "pb-[var(--wp-safe-b)]",
+          "lg:inset-y-0 lg:left-auto lg:right-0 lg:w-full lg:max-w-sm lg:max-h-none",
+          "lg:animate-drawer-in lg:rounded-none lg:border-l lg:border-t-0 lg:pb-0",
           "focus-visible:outline-none",
         )}
       >
@@ -68,13 +103,13 @@ export function AdvancedPanel({ theme, onChange, onClose }) {
             type="button"
             onClick={onClose}
             aria-label="Close advanced settings"
-            className="-mr-1 shrink-0 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="-mr-1 shrink-0 rounded-lg p-1.5 wp-touch:p-3 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <CloseGlyph />
           </button>
         </header>
 
-        <div className="wp-thin-scrollbar min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5">
+        <div className="wp-thin-scrollbar min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-5 py-5">
           <ContrastReport theme={theme} />
 
           <section>
@@ -186,7 +221,12 @@ function NumberField({ label, value, min = 0, max = MAX_OFFSET, onChange }) {
     setDraft(String(value));
   }
 
-  // Numbers, never strings: `--wp-panel-offset-y` adds 72 to this value.
+  const clamp = (n) => Math.min(max, Math.max(min, Math.round(n)));
+
+  // Numbers, never strings — and always already clamped, because `lastValue` is
+  // set on the assumption the store hands back exactly what it was given. Push
+  // something out of range and the theme would normalise it to something else,
+  // leaving the guard above convinced the field was already in sync.
   const push = (n) => {
     setLastValue(n);
     if (n !== value) onChange(n);
@@ -195,9 +235,17 @@ function NumberField({ label, value, min = 0, max = MAX_OFFSET, onChange }) {
   const commit = (raw) => {
     const n = Number(raw);
     if (raw.trim() === "" || !Number.isFinite(n)) return value;
-    const clamped = Math.min(max, Math.max(min, Math.round(n)));
+    const clamped = clamp(n);
     push(clamped);
     return clamped;
+  };
+
+  /** Arrow-key stepping, which `type="number"` used to provide for free. */
+  const step = (delta) => {
+    const from = Number(draft);
+    const next = clamp((Number.isFinite(from) && draft !== "" ? from : value) + delta);
+    setDraft(String(next));
+    push(next);
   };
 
   return (
@@ -206,35 +254,59 @@ function NumberField({ label, value, min = 0, max = MAX_OFFSET, onChange }) {
         {label}
       </label>
       <div className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5">
+        {/*
+         * Deliberately `text`, not `number`.
+         *
+         * A number input sanitises anything it cannot parse to the empty
+         * string — and `e`, `E`, `+`, `-` and a second `.` are all typeable
+         * into one — so a stray keystroke blanked the box mid-edit and left
+         * the controlled value arguing with what the browser still displayed.
+         * It also steps to the mouse wheel while focused, and this field sits
+         * inside a scrolling drawer: scrolling the panel after typing silently
+         * edited the number.
+         *
+         * `inputMode` keeps the numeric keypad on a phone, the digits-only
+         * guard below does the filtering the browser was doing badly, and
+         * `spinbutton` restores the semantics the native type gave for free.
+         */}
         <input
           id={inputId}
-          type="number"
+          type="text"
           inputMode="numeric"
-          min={min}
-          max={max}
+          autoComplete="off"
+          role="spinbutton"
+          aria-valuenow={value}
+          aria-valuemin={min}
+          aria-valuemax={max}
           value={draft}
           onFocus={() => setIsFocused(true)}
           onChange={(event) => {
             const next = event.target.value;
+            // Anything that isn't a digit never enters the draft at all.
+            if (!/^\d*$/.test(next)) return;
             setDraft(next);
-            // Preview whole numbers that are already in range. Everything else
-            // — blanks, a lone "-", a value on its way past the cap — waits for
-            // blur rather than snapping the launcher around mid-word.
-            const n = Number(next);
-            if (/^\d+$/.test(next) && n >= min && n <= max) push(n);
+            // Preview as they type. A value past the cap previews at the cap
+            // rather than freezing the launcher until blur, so typing 300 shows
+            // what 300 is going to mean instead of looking broken.
+            if (next !== "") push(clamp(Number(next)));
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowUp") {
+              event.preventDefault();
+              step(event.shiftKey ? 10 : 1);
+            } else if (event.key === "ArrowDown") {
+              event.preventDefault();
+              step(event.shiftKey ? -10 : -1);
+            } else if (event.key === "Enter") {
+              event.preventDefault();
+              event.currentTarget.blur();
+            }
           }}
           onBlur={(event) => {
             setIsFocused(false);
             setDraft(String(commit(event.target.value)));
           }}
-          className={cn(
-            "w-16 bg-transparent text-right text-xs tabular-nums focus:outline-none",
-            // The native spinner covers half of a box this size; arrow keys
-            // still step the value without it.
-            "[appearance:textfield]",
-            "[&::-webkit-inner-spin-button]:appearance-none",
-            "[&::-webkit-outer-spin-button]:appearance-none",
-          )}
+          className="w-16 bg-transparent text-right text-xs tabular-nums focus:outline-none wp-touch:w-20"
         />
         <span className="text-[10px] text-muted-foreground">px</span>
       </div>
@@ -287,7 +359,7 @@ function AdvancedField({ field, value, onChange }) {
         value={value}
         onChange={(event) => onChange(event.target.value)}
         className={cn(
-          "size-8 shrink-0 cursor-pointer rounded-md border border-border bg-transparent p-0.5",
+          "size-8 shrink-0 cursor-pointer rounded-md border border-border bg-transparent p-0.5 wp-touch:size-11",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           "[&::-webkit-color-swatch]:rounded [&::-webkit-color-swatch]:border-none",
           "[&::-webkit-color-swatch-wrapper]:p-0",
